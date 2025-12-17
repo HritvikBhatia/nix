@@ -5,14 +5,13 @@ type Status = "not started" | "running" | "finished";
 type Difficulty = "easy" | "medium" | "hard"
 
 interface Question {
-  id?: string | number;
+  id: number;
   text: string;
   difficulty: Difficulty;
 }
 
 interface Interview {
   questions: Question[];
-  currentQuestionIndex: number;
   interviewerAnswer: string[]; // change to string[] or a different shape if needed
   correctAnswer: string[];
   timer: number | null;
@@ -41,7 +40,6 @@ export const interviewSlice = createSlice({
             state.currentStatus = "running"
             state.currentInterview = {
                 questions: action.payload.questions,
-                currentQuestionIndex: 0,
                 interviewerAnswer: [],
                 correctAnswer: action.payload.correctAnswer,
                 timer:600,
@@ -51,14 +49,25 @@ export const interviewSlice = createSlice({
                 aiSummary: null,
             }
         },
-        answerQuestion: (state, action) =>{
+        submitInterview: (state, action) =>{
           if(!state.currentInterview) return;
-          const idx = state.currentInterview.currentQuestionIndex;
-          state.currentInterview.correctAnswer[idx] = action.payload;
-        }
+          state.currentStatus = "finished";
+          state.currentInterview.interviewerAnswer = action.payload
+        },
+
+        evaluateInterview : (state, action) => {
+          if(!state.currentInterview) return;
+            state.currentInterview.interviewerScored = action.payload.interviewerScored
+            state.currentInterview.aiSummary = action.payload.aiSummary
+        },
+
+        resetInterview: (state) => {
+          state.currentStatus = "not started";
+          state.currentInterview = null;
+        },
 
     }
 })
 
-export const {startInterview}= interviewSlice.actions;
+export const {startInterview, submitInterview, evaluateInterview, resetInterview}= interviewSlice.actions;
 export default interviewSlice.reducer;

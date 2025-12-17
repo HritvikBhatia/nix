@@ -25,9 +25,13 @@ export const resumeSlice = createSlice({
     reducers:{
         addUser: (state, action) =>{
             state.user = action.payload
+        },
+
+        clearResume: (state) =>{
+            state.user = null
         }
     }
 })
 
-export const {addUser} = resumeSlice.actions;
+export const {addUser, clearResume} = resumeSlice.actions;
 export default resumeSlice.reducer;
