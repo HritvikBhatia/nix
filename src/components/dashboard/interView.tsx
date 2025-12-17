@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { GoogleGenAI } from "@google/genai";
 import { useEffect, useState } from "react";
 import { evaluateInterview, startInterview, submitInterview } from "@/store/interviewSlice";
+import { toast } from "sonner";
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey: apiKey });
@@ -22,10 +23,12 @@ export const InterView = () => {
     if (!user) {
       navigate("/", { replace: true });
     }
-    console.log(interview.currentInterview?.correctAnswer)
+    console.log(interview.currentInterview)
   }, [user, navigate]);
 
   async function main(prompt : string, func : string) {
+    setLoading(true)
+    const toastId = toast.loading(func === "generate" ? "Generating interview..." : "Evaluating answers...");
     try {
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
@@ -34,7 +37,9 @@ export const InterView = () => {
       if (!response || !response.text) {
         throw new Error("Gemini returned no text");
       }
-      const parsed = JSON.parse(response.text.trim());
+      const text = response.text.trim();
+      const cleanJson = text.replace(/^```json/, "").replace(/```$/, "").trim();
+      const parsed = JSON.parse(cleanJson);
       if(func === "generate"){
         dispatch(
           startInterview({
@@ -42,18 +47,26 @@ export const InterView = () => {
             correctAnswer: parsed.correctAnswer,
             weightage: parsed.weightage,
           })
-        );
-      }
-      if(func === "evaluate"){
+        )
+        toast.success("Interview ready!", { id: toastId });;
+      } else if (func === "evaluate"){
         dispatch(
           evaluateInterview({
             interviewerScored: parsed.interviewerScored,
             aiSummary: parsed.aiSummary
           })
         )
+        toast.success("Evaluation complete!", { id: toastId });
       }
-      } catch (err) {
+      } catch (err: any) {
       console.error("Gemini error", err);
+      if (err.status === "RESOURCE_EXHAUSTED" || err.message?.includes("429")) {
+      toast.error("Rate limit reached. Please wait 30 seconds.", { id: toastId }); //
+      } else if (err.status === "NOT_FOUND" || err.message?.includes("404")) {
+        toast.error("AI Model error. Please try again later.", { id: toastId }); //
+      } else {
+        toast.error("Something went wrong. Please refresh.", { id: toastId }); //
+      }
     } finally {
       setLoading(false);
     }
@@ -91,7 +104,7 @@ export const InterView = () => {
       {interview.currentStatus === "not started" && (
         <div className="max-w-3xl">
           <h1>{user?.name} Lets Start the Interview</h1>
-          <Button size="lg" onClick={handleStart}>
+          <Button size="lg" onClick={handleStart} disabled={loading}>
             {loading ? "loading.." : "start"}
           </Button>
         </div>
@@ -133,8 +146,8 @@ export const InterView = () => {
       {interview.currentStatus === "finished" && (
         <div>
           <h1 className="max-w-3xl">Congrats {user?.name} finishing the interview</h1>
-          <Button size="lg" onClick={handleEvaluate}>
-            {loading ? "loading.." : "start Evaluating"}
+          <Button size="lg" onClick={handleEvaluate} disabled={loading}>
+            {loading ? "Evaluating..." : "start Evaluating"}
           </Button>
         </div>
       )}
