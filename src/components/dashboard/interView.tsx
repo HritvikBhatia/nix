@@ -23,9 +23,12 @@ export const InterView = () => {
     if (!user) {
       navigate("/", { replace: true });
     }
+    if(interview.currentInterview?.aiSummary != null){
+      navigate("/evaluation", { replace: true });
+    }
     console.log(interview.currentInterview)
   }, [user, navigate]);
-
+  
   async function main(prompt : string, func : string) {
     setLoading(true)
     const toastId = toast.loading(func === "generate" ? "Generating interview..." : "Evaluating answers...");
@@ -57,6 +60,7 @@ export const InterView = () => {
           })
         )
         toast.success("Evaluation complete!", { id: toastId });
+        navigate("/evaluation", {replace:true})
       }
       } catch (err: any) {
       console.error("Gemini error", err);

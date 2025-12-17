@@ -4,6 +4,7 @@ import Dashboard from "./components/dashboard/dashboard"
 import {Routes, BrowserRouter, Route} from "react-router-dom"
 import { AtsScore } from "./components/dashboard/atsScore"
 import { InterView } from "./components/dashboard/interView"
+import Evaluation from "./components/dashboard/evaluation"
 
 function App() {
 
@@ -15,6 +16,7 @@ function App() {
             <Route path="/" element={<Dashboard/>}/>
             <Route path="/interview" element={<InterView/>}/>
             <Route path="/atsscore" element={<AtsScore/>}/>
+            <Route path="/evaluation" element={<Evaluation/>}/>
         </Routes>
       </div>
           <Toaster/>
