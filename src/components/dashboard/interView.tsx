@@ -4,15 +4,18 @@ import { Button } from "../ui/button";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { evaluateInterview, startInterview, submitInterview } from "@/store/interviewSlice";
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { toast } from "sonner";
 import ai from "@/lib/gemini";
+import { Mic } from "lucide-react";
 
 export const InterView = () => {
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(false);
-  const [form , setForm] = useState({ques1:"", ques2:"", ques3:"", ques4:"", ques5:"", ques6:"", ques7:"", ques8:"", ques9:"", ques10:"" })
   const user = useSelector((state: RootState) => state.resume.user);
   const interview = useSelector((state: RootState) => state.interview);
+  const [loading, setLoading] = useState(false);
+  const [activeQues, setActiveQues] = useState<number | null>(null);
+  const [form , setForm] = useState({ques1:"", ques2:"", ques3:"", ques4:"", ques5:"", ques6:"", ques7:"", ques8:"", ques9:"", ques10:"" })
 
   const navigate = useNavigate();
 
@@ -26,6 +29,19 @@ export const InterView = () => {
     console.log(interview.currentInterview)
   }, [user, interview.currentInterview?.aiSummary, navigate]);
   
+  const { transcript, listening, resetTranscript ,browserSupportsSpeechRecognition } = useSpeechRecognition();
+  if (!browserSupportsSpeechRecognition) {
+    return <span>Browser doesn't support speech recognition.</span>;
+  }
+  useEffect(() => {
+    if (activeQues !== null) {
+      setForm((prev) => ({
+        ...prev,
+        [`ques${activeQues}`]: transcript,
+      }));
+    }
+  }, [transcript, activeQues]);
+
   async function main(prompt : string, func : string) {
     setLoading(true)
     const toastId = toast.loading(func === "generate" ? "Generating interview..." : "Evaluating answers...");
@@ -76,7 +92,6 @@ export const InterView = () => {
   
 
   function handleStart() {
-    setLoading(true);
     const prompt = generateQuestions + "\n\nCandidate Profile:\n" + JSON.stringify({
           education: user?.education,
           projects: user?.projects,
@@ -119,22 +134,44 @@ export const InterView = () => {
                   <p className="text-base font-medium text-gray-800 leading-relaxed">
                     {ques.text}
                   </p>
-                  <textarea placeholder="Type your answer here..." rows={4} className="block w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500" 
-                  onInput={(e) => { 
-                    const target = e.currentTarget; 
-                    target.style.height = "auto"; 
-                    target.style.height = target.scrollHeight + "px";
-                  }}
-                  name={`ques${ques.id}`}
-                  value={form[`ques${ques.id}` as keyof typeof form]}
-                  onChange={(e) => {
-                    const { name, value } = e.target;
-                    setForm((prev) => ({
-                      ...prev,
-                      [name]:value
-                    }))
-                  }}
-                  />
+                  <div className="relative w-full">
+                    
+                    <textarea placeholder="Type your answer here..." rows={4} className="block w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500" 
+                    onInput={(e) => { 
+                      const target = e.currentTarget; 
+                      target.style.height = "auto"; 
+                      target.style.height = target.scrollHeight + "px";
+                    }}
+                    name={`ques${ques.id}`}
+                    value={form[`ques${ques.id}` as keyof typeof form]}
+                    onChange={(e) => {
+                      const { name, value } = e.target;
+                      setForm((prev) => ({
+                        ...prev,
+                        [name]:value
+                      }))
+                    }}
+                    />
+                    <button
+                        className={`absolute bottom-2 right-2 p-2 rounded-full transition ${
+                          listening && activeQues === ques.id
+                            ? "bg-red-600 animate-pulse"
+                            : "bg-violet-600 hover:bg-violet-700"
+                        }`}
+                         onClick={() => {
+                            if (listening && activeQues === ques.id) {
+                              SpeechRecognition.stopListening();
+                              setActiveQues(null);
+                            } else {
+                              resetTranscript(); 
+                              setActiveQues(ques.id);
+                              SpeechRecognition.startListening({ continuous: true });
+                            }
+                          }}>
+                        <Mic />
+                      </button>
+
+                  </div>
                 </div>
               </li>
             ))}
