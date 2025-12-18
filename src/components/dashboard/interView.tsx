@@ -2,13 +2,10 @@ import type { RootState } from "@/store/store";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "../ui/button";
 import { useNavigate } from "react-router-dom";
-import { GoogleGenAI } from "@google/genai";
 import { useEffect, useState } from "react";
 import { evaluateInterview, startInterview, submitInterview } from "@/store/interviewSlice";
 import { toast } from "sonner";
-
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const ai = new GoogleGenAI({ apiKey: apiKey });
+import ai from "@/lib/gemini";
 
 export const InterView = () => {
   const dispatch = useDispatch();
@@ -23,11 +20,11 @@ export const InterView = () => {
     if (!user) {
       navigate("/", { replace: true });
     }
-    if(interview.currentInterview?.aiSummary != null){
+    if(interview.currentInterview?.aiSummary){
       navigate("/evaluation", { replace: true });
     }
     console.log(interview.currentInterview)
-  }, [user, navigate]);
+  }, [user, interview.currentInterview?.aiSummary, navigate]);
   
   async function main(prompt : string, func : string) {
     setLoading(true)

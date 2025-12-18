@@ -7,16 +7,11 @@ import { Button } from "../ui/button";
 
 export const Option = () => {
   const dispatch = useDispatch();
-  const naviagte = useNavigate();
+  const navigate = useNavigate();
   const user = useSelector((state:RootState) => state.resume.user);
   
   if(!user){
-    naviagte("/", {replace: true});
-  }
-
-  const handleRetakeTest = () => {
-    dispatch(resetInterview());
-    naviagte("/interview");
+    navigate("/", {replace: true});
   }
 
   const handleNewResume = () => {
@@ -37,13 +32,6 @@ export const Option = () => {
         <h3 className="text-blue-100 text-center mb-2">Session Options</h3>
         
         <div className="flex gap-3">
-          <Button 
-            onClick={handleRetakeTest} 
-            variant="secondary"
-          >
-            Retake Test (Keep Resume)
-          </Button>
-
           <Button 
             onClick={handleNewResume} 
             variant="destructive"

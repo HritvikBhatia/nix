@@ -1,12 +1,9 @@
 import pdfToText from "react-pdftotext";
 import { useState } from "react";
 import { FaFile, FaSpinner, FaUpload } from "react-icons/fa";
-import { GoogleGenAI } from "@google/genai";
 import { useDispatch } from "react-redux";
 import { addUser } from "@/store/resumeSlice";
-
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const ai = new GoogleGenAI({ apiKey: apiKey });
+import ai from "@/lib/gemini";
 
 function MainContent() {
   const [loading, setLoading] = useState(false);

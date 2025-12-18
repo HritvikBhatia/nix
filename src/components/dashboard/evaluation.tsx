@@ -1,14 +1,16 @@
 import type { RootState } from "@/store/store";
 import { useEffect, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 import { Button } from "../ui/button";
 import { ChevronDown, ChevronUp, CheckCircle, XCircle } from "lucide-react"; // Import icons
 import "react-circular-progressbar/dist/styles.css";
+import { resetInterview, startInterview } from "@/store/interviewSlice";
 
 function Evaluation() {
   const navigate = useNavigate();
+  const dispatch = useDispatch()
   const user = useSelector((state: RootState) => state.resume.user);
   const interview = useSelector((state: RootState) => state.interview);
 
@@ -19,14 +21,42 @@ function Evaluation() {
   }, [interview.currentInterview?.interviewerScored]);
 
   useEffect(() => {
-    if (!user || interview.currentStatus !== "finished") {
+    if (!user) {
       navigate("/", { replace: true });
     }
-  }, [user, interview.currentStatus, navigate]);
+    if (interview.currentStatus !== "finished" || !interview.currentInterview) {
+      navigate("/", { replace: true });
+    }
+  }, [user, interview.currentStatus, interview.currentInterview, navigate]);
 
   const toggleAccordion = (id: number) => {
     setExpandedId(expandedId === id ? null : id);
   };
+
+  const handleRetakeTest = () => {
+    dispatch(resetInterview());
+    navigate("/interview");
+  }
+
+  function handleRetakeSameTest(){
+    if (!interview.currentInterview) return;
+
+    const { questions, correctAnswer, weightage } =
+    interview.currentInterview;
+
+    dispatch(resetInterview());
+    
+    dispatch(
+      startInterview({
+        questions,
+        correctAnswer,
+        weightage,
+      })
+    );
+
+    navigate("/interview");
+  }
+  
 
   return (
     <div className="bg-lavender-grape p-8 flex flex-col items-center">
@@ -107,6 +137,8 @@ function Evaluation() {
         {/* Footer Actions */}
         <div className="flex justify-center gap-4">
           <Button variant="outline" onClick={() => navigate("/")}>Home</Button>
+          <Button onClick={handleRetakeTest} variant="secondary">Retake Test</Button>
+          <Button onClick={handleRetakeSameTest} variant="secondary">Retake Same Test (Question Will be same)</Button>
         </div>
       </div>
     </div>

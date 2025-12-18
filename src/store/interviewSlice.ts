@@ -60,7 +60,7 @@ export const interviewSlice = createSlice({
             state.currentInterview.interviewerScored = action.payload.interviewerScored
             state.currentInterview.aiSummary = action.payload.aiSummary
         },
-
+        
         resetInterview: (state) => {
           state.currentStatus = "not started";
           state.currentInterview = null;
